@@ -5,6 +5,13 @@ export function baseUrl(input) {
   if (url.search || url.hash) throw new Error('Use the instance base URL without a query or fragment.');
   return url.href.replace(/\/+$/, '');
 }
+export function requireSecureConnection(input) {
+  const url = new URL(input);
+  const loopback = url.hostname === 'localhost' || url.hostname === '[::1]' || /^127\./.test(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
+    throw new Error('Use HTTPS for remote Kuma servers. HTTP is supported only on localhost for local testing.');
+  }
+}
 export function publicConnection(input, fallbackSlug = '') {
   const page = new URL(input.trim());
   // Copied page URLs can include tracking parameters or an anchor.
@@ -29,6 +36,7 @@ export function connectionFromManifest(pageUrl, href) {
 }
 export function validateConfig(input) {
   const config = { ...DEFAULTS, ...input, url: baseUrl(input.url) };
+  requireSecureConnection(config.url);
   if (!['private', 'public'].includes(config.mode)) throw new Error('Choose a connection method.');
   if (![1, 2, 5, 10].includes(Number(config.interval))) throw new Error('Choose a valid refresh interval.');
   config.interval = Number(config.interval);

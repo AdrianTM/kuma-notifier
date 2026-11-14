@@ -1,0 +1,37 @@
+{
+  "name": {
+    "en-US": "Kuma Notifier"
+  },
+  "slug": "kuma-notifier",
+  "summary": {
+    "en-US": "Monitor Uptime Kuma from your toolbar with down counts, a searchable monitor list, and optional outage and recovery alerts."
+  },
+  "description": {
+    "en-US": "Keep an eye on your Uptime Kuma monitors without leaving a dashboard open.\n\nKuma Notifier puts the number of down monitors on your Firefox toolbar. Click the icon to see a searchable list with problems first, status filters, response times, and 24-hour uptime when available.\n\n\u2022 Connect with your Kuma account, or paste a published status-page URL.\n\u2022 Receive optional desktop alerts for outages and recoveries.\n\u2022 Snooze alerts for one hour or resume them beside Settings.\n\u2022 Refresh manually or check every 1, 2, 5, or 10 minutes.\n\u2022 Open a monitor directly in Kuma.\n\u2022 See when cached results may be stale because the server is unreachable.\n\u2022 Use the light or dark appearance selected by your system.\n\nRequires an existing Uptime Kuma instance or a published Kuma status page. Remote hosts must use HTTPS and be reachable from your browser. For a server behind a VPN, connect to that VPN first. HTTP is supported only on localhost for local testing. One connection is supported at a time; the extension does not edit monitors.\n\nAccount connections send credentials and a login token directly to the Kuma server you choose, with Firefox's authentication-information consent. Passwords are never saved. Settings, the login token, and the last monitor snapshot stay in your browser profile. Public connections fetch only the selected page. No analytics, advertising, cloud sync, or publisher-operated backend.\n\nChecks require Firefox to be running. Outages entirely between checks can be missed, and status-page caching can delay updates. Keep Kuma's own notifications for critical alerts.\n\nAn independent companion for Uptime Kuma; not an official Uptime Kuma project.\nSource and support: https://github.com/AdrianTM/kuma-notifier\n"
+  },
+  "homepage": {
+    "en-US": "https://github.com/AdrianTM/kuma-notifier"
+  },
+  "support_url": {
+    "en-US": "https://github.com/AdrianTM/kuma-notifier/issues"
+  },
+  "default_locale": "en-US",
+  "categories": {
+    "firefox": [
+      "alerts-updates",
+      "web-development"
+    ]
+  },
+  "is_disabled": true,
+  "requires_payment": false,
+  "version": {
+    "license": "MIT",
+    "compatibility": [
+      "firefox"
+    ],
+    "release_notes": {
+      "en-US": "Initial release with Kuma account and public status-page connections, toolbar down counts, searchable monitor lists, optional outage/recovery alerts, snoozing, and stale-connection indicators."
+    },
+    "approval_notes": "Kuma Notifier is an independent, read-only companion for Uptime Kuma. This submission targets desktop Firefox 140+ (Linux, macOS, Windows); Android is not selected for distribution.\n\nBUILD\nExtract the separate source ZIP and follow BUILD-FIREFOX.md: use Node.js 22 and npm, run npm ci, then npm run build. The Firefox extension is in dist/firefox/. esbuild bundles the JS modules without minification. All runtime dependencies are released npm packages pinned in package-lock.json. LICENSE and THIRD_PARTY_NOTICES.txt ship in the extension. No remote code or obfuscation is used.\n\nONE EXPECTED VALIDATOR WARNING\nDANGEROUS_EVAL comes from the unmodified engine.io-client 6.6.8 globals.js fallback, which calls Function(\"return this\")() only if both self and window are absent. Firefox background pages and Chrome service workers provide self, so that fallback is never executed in the supported extension environments. The extension CSP allows only script-src 'self' and does not allow unsafe-eval. The official dependency sources are left unchanged; build instructions reproduce this exact code. The app does not evaluate remote data or inject it as executable content.\nOfficial packages: https://www.npmjs.com/package/socket.io-client/v/4.8.1 and https://www.npmjs.com/package/engine.io-client/v/6.6.8 . Bundled transitive package versions and licenses appear in THIRD_PARTY_NOTICES.txt.\n\nDATA AND PERMISSIONS\nThe only mandatory API permissions are storage and alarms. HTTP/HTTPS hosts are optional so users can select their own Kuma installation; access is requested only for the selected host. Remote URLs must use HTTPS; plain HTTP is restricted to loopback for local testing. Notifications are optional. Firefox data consent declares required: [\"none\"], optional: [\"authenticationInfo\"]. Account connections request this permission before sending credentials, check it on each refresh, and clear the token/stop account polling on revocation. Public-page mode does not need it. Credentials go only to the configured Kuma server. No publisher endpoint, analytics, advertising, browser sync, or content scripts exist. See PRIVACY.md for the complete disclosure.\n\nFUNCTIONAL TESTING WITHOUT EXTERNAL ACCESS\nThe source archive includes a loopback-only protocol fixture. After npm ci, run npm run reviewer:server. It prints the localhost URL (default http://127.0.0.1:3001). It is a test server, not a real Kuma deployment, and all its data and credentials are synthetic.\n1. In extension Settings select Published status page. Paste http://127.0.0.1:3001/status/main and Save & connect. Approve the host permission and optional notifications. The popup shows Website and API server.\n2. Open http://127.0.0.1:3001 in a normal browser tab to access the local fixture controls. Click Simulate outage, then Refresh in the extension. The badge becomes 1. Click Simulate recovery, then Refresh. Outage/recovery notifications depend on the OS notification service and the selected settings.\n3. Search for a monitor; use the Problems filter. Click Snooze alerts to suppress notifications while keeping the badge live. Click Resume alerts to restore them.\n4. Stop the fixture and Refresh to see the ? badge and cached results. Restart it to recover.\n5. For a private connection, select Kuma login and enter http://127.0.0.1:3001, username demo, password fixture-password. These are public local-fixture credentials, not a real account. Approve authentication-information consent. Refresh to exercise saved-token login.\n6. Revoke authentication-information consent in about:addons. Further account checks are blocked, the saved token is removed, and Settings offers reconnecting or using a public page. Disconnect & clear local data clears the configuration.\n7. Optional: to test with real Kuma, run a disposable Uptime Kuma 2.5.11 instance locally, complete its initial setup with a throwaway account, add a monitor and publish a status page, then connect using the same flows. No access to the maintainer's private instance is required or provided.\n\nAutomated checks: npm test (core and Socket.IO adapter tests) and python3 scripts/firefox-smoke.py with geckodriver cover both connection methods, custom-domain slug discovery, saved settings, failed-login rollback, badge transitions, and authentication consent/revocation. Native OS notification delivery, signed-install restart behavior, and Android have not been verified by the headless suite.\n"
+  }
+}

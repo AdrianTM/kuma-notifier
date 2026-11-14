@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULTS, baseUrl, validateConfig, hostPermission, publicConnection, connectionFromManifest, normalize, transitions, carryAlertState, badge, monitorUrl, sourceKey } from '../src/core.js';
+import { DEFAULTS, baseUrl, validateConfig, requireSecureConnection, hostPermission, publicConnection, connectionFromManifest, normalize, transitions, carryAlertState, badge, monitorUrl, sourceKey } from '../src/core.js';
+test('remote connections require encryption while loopback fixtures remain available', () => {
+  for (const url of ['https://kuma.example.com', 'http://localhost:3001', 'http://127.0.0.1:3001', 'http://[::1]:3001']) assert.doesNotThrow(() => requireSecureConnection(url));
+  for (const url of ['http://kuma.example.com', 'http://100.80.2.1:3001', 'http://localhost.example.com', 'ftp://localhost']) {
+    assert.throws(() => validateConfig({ mode: 'public', url, slug: 'main' }));
+  }
+});
 test('pasted public URLs extract slugs while preserving ports and reverse-proxy paths', () => {
   assert.deepEqual(publicConnection(' http://100.80.2.1:3001/kuma/status/main/?view=all#services '), {
     url: 'http://100.80.2.1:3001/kuma', slug: 'main', publicUrl: 'http://100.80.2.1:3001/kuma/status/main',

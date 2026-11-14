@@ -1,0 +1,20 @@
+Keep an eye on your Uptime Kuma monitors without leaving a dashboard open.
+
+Kuma Notifier puts the number of down monitors on your Firefox toolbar. Click the icon to see a searchable list with problems first, status filters, response times, and 24-hour uptime when available.
+
+• Connect with your Kuma account, or paste a published status-page URL.
+• Receive optional desktop alerts for outages and recoveries.
+• Snooze alerts for one hour or resume them beside Settings.
+• Refresh manually or check every 1, 2, 5, or 10 minutes.
+• Open a monitor directly in Kuma.
+• See when cached results may be stale because the server is unreachable.
+• Use the light or dark appearance selected by your system.
+
+Requires an existing Uptime Kuma instance or a published Kuma status page. Remote hosts must use HTTPS and be reachable from your browser. For a server behind a VPN, connect to that VPN first. HTTP is supported only on localhost for local testing. One connection is supported at a time; the extension does not edit monitors.
+
+Account connections send credentials and a login token directly to the Kuma server you choose, with Firefox's authentication-information consent. Passwords are never saved. Settings, the login token, and the last monitor snapshot stay in your browser profile. Public connections fetch only the selected page. No analytics, advertising, cloud sync, or publisher-operated backend.
+
+Checks require Firefox to be running. Outages entirely between checks can be missed, and status-page caching can delay updates. Keep Kuma's own notifications for critical alerts.
+
+An independent companion for Uptime Kuma; not an official Uptime Kuma project.
+Source and support: https://github.com/AdrianTM/kuma-notifier

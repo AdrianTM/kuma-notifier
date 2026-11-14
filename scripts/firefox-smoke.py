@@ -42,7 +42,7 @@ try:
    if p.is_file():z.write(p,p.relative_to('dist/firefox'))
  print('Installed:',request('POST',prefix+'/moz/addon/install',{'path':archive,'temporary':True}))
  request('POST',prefix+'/moz/context',{'context':'chrome'})
- uuid=js("return JSON.parse(Services.prefs.getStringPref('extensions.webextensions.uuids'))['kuma-notifier@local.extension'];")
+ uuid=js("return JSON.parse(Services.prefs.getStringPref('extensions.webextensions.uuids'))['kuma-notifier@adriantm'];")
  request('POST',prefix+'/moz/context',{'context':'content'})
  extension='moz-extension://'+uuid+'/'
  goto(extension+'popup.html')
@@ -136,6 +136,8 @@ try:
   assert result=='Connected. 1 monitors loaded.',result
   data=asyncjs("const done=arguments[arguments.length-1];browser.storage.local.get().then(done);")
   assert data['token']=='fixture-token'
+  permissions=asyncjs("const done=arguments[arguments.length-1];browser.permissions.getAll().then(done);")
+  assert 'authenticationInfo' in permissions['data_collection']
   assert 'fixture-password' not in json.dumps(data) and 'must-not-be-stored' not in json.dumps(data)
   result=asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'refresh'}).then(done);")
   assert result['ok'] and result['value']['error'] is None,result
@@ -146,6 +148,14 @@ try:
   assert result['ok'] is False
   assert asyncjs("const done=arguments[arguments.length-1];browser.storage.local.get().then(done);")['token']=='fixture-token'
   print('PASS: Firefox private login, token reconnect, sensitive-field filtering, and failed-login rollback')
+  assert asyncjs("const done=arguments[arguments.length-1];browser.permissions.remove({data_collection:['authenticationInfo']}).then(done);")
+  result=asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'refresh'}).then(done);")
+  assert 'Allow authentication information' in result['value']['error'],result
+  data=asyncjs("const done=arguments[arguments.length-1];browser.storage.local.get().then(done);")
+  assert 'token' not in data
+  with urllib.request.urlopen(private_url) as response:stats=json.load(response)
+  assert stats=={'passwordLogins':1,'tokenLogins':1},stats
+  print('PASS: authentication consent is requested and revoking it blocks subsequent account connections')
  finally:
   fixture.terminate()
   fixture.wait(timeout=10)

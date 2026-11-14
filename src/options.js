@@ -1,5 +1,5 @@
-import { api } from './browser.js';
-import { DEFAULTS, validateConfig, hostPermission, publicConnection, connectionFromManifest, monitorUrl } from './core.js';
+import { api, hasFirefoxDataConsent } from './browser.js';
+import { DEFAULTS, validateConfig, hostPermission, publicConnection, connectionFromManifest, monitorUrl, requireSecureConnection } from './core.js';
 const $ = id => document.getElementById(id);
 let current = { ...DEFAULTS };
 let needsSlug = false;
@@ -33,9 +33,11 @@ $('settings-form').addEventListener('submit', async event => {
   try {
     let draft = { ...current, ...Object.fromEntries(['mode', 'url', 'slug', 'interval'].map(k => [k, $(k).value])), outages: $('outages').checked, recoveries: $('recoveries').checked };
     if (draft.mode === 'public') draft = { ...draft, ...publicConnection(draft.url, draft.slug) };
+    requireSecureConnection(draft.url);
     // Request inside the user gesture before other asynchronous work.
     const request = { origins: [hostPermission(draft.url)] };
     if (draft.outages || draft.recoveries) request.permissions = ['notifications'];
+    if (draft.mode === 'private' && hasFirefoxDataConsent) request.data_collection = ['authenticationInfo'];
     if (!await api.permissions.request(request)) throw new Error('Access was not granted. Please grant host access to connect.');
     if (draft.mode === 'public' && !draft.slug) {
       try {

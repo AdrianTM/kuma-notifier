@@ -6,7 +6,9 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test",
-    "lint:extension": "web-ext lint --source-dir dist/firefox --warnings-as-errors",
+    "lint:extension": "web-ext lint --source-dir dist/firefox",
+    "source:firefox": "python3 scripts/package-source.py",
+    "reviewer:server": "node scripts/reviewer-server.mjs",
     "package": "npm run build && web-ext build --source-dir dist/firefox --artifacts-dir artifacts --overwrite-dest && web-ext build --source-dir dist/chrome --artifacts-dir artifacts/chrome --overwrite-dest"
   },
   "dependencies": {

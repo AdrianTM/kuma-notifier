@@ -59,7 +59,7 @@ Choose **Kuma login · all monitors** and enter your instance's **base URL**, fo
 
 After connecting, leave both username and password blank to reuse the saved login token for that instance. If the token expires or your password changes, sign in again.
 
-Your browser must be able to reach the instance. For hosts behind a VPN or Tailscale, connect to that network first. Password-protected status pages and additional login gateways, including Cloudflare Access, are not currently supported.
+Your browser must be able to reach the instance. Remote servers require HTTPS; HTTP is available only for localhost testing. For hosts behind a VPN or Tailscale, connect to that network first. Password-protected status pages and additional login gateways, including Cloudflare Access, are not currently supported.
 
 ## Badges and alerts
 
@@ -78,7 +78,7 @@ The extension connects directly to the configured Kuma host. There are no analyt
 
 Passwords and two-factor codes are never saved. Login tokens, connection settings, and the latest monitor snapshot are stored locally in the browser profile. A token carries the Kuma account's privileges, and browser local storage is not an encrypted secret vault. Full private monitor configurations are not persisted.
 
-Host access and desktop notification permission are requested when connecting. HTTPS is recommended; normal certificate validation applies. **Disconnect & clear local data** removes the saved connection, token, and snapshot, and releases the current host permission. It does not revoke the token on the Kuma server.
+Host access and desktop notification permission are requested when connecting. Firefox also requests authentication-information consent for account connections; public pages do not require it. Revoking that consent stops account checks and removes the saved token. **Disconnect & clear local data** removes the saved connection, token, and snapshot, and releases the current host permission. It does not revoke the token on the Kuma server. See the full [privacy policy](PRIVACY.md).
 
 ## Compatibility
 

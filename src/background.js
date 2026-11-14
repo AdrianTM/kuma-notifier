@@ -1,4 +1,4 @@
-import { api } from './browser.js';
+import { api, requireAuthenticationConsent } from './browser.js';
 import { validateConfig, sourceKey, hostPermission, transitions, carryAlertState, badge, monitorUrl } from './core.js';
 import { privateSnapshot, publicSnapshot } from './kuma.js';
 
@@ -16,6 +16,8 @@ async function schedule(config) {
   await api.alarms.create('refresh', { periodInMinutes: config.interval, delayInMinutes: config.interval });
 }
 async function collect(config, token, credentials) {
+  validateConfig(config);
+  if (config.mode === 'private') await requireAuthenticationConsent();
   return config.mode === 'public' ? publicSnapshot(config) : privateSnapshot(config, credentials || { token });
 }
 async function notify(changes) {
@@ -101,3 +103,14 @@ function registerNotificationClick() {
 }
 registerNotificationClick();
 api.permissions.onAdded.addListener(registerNotificationClick);
+api.permissions.onRemoved.addListener(permissions => {
+  if (permissions.data_collection?.includes('authenticationInfo')) serialize(async () => {
+    const { config, snapshot } = await api.storage.local.get(['config', 'snapshot']);
+    if (config?.mode !== 'private') return;
+    await api.storage.local.remove('token');
+    await api.alarms.clear('refresh');
+    const next = { ...snapshot, monitors: snapshot?.monitors || [], error: 'Authentication consent was removed. Reconnect in Settings or use a public status page.' };
+    await api.storage.local.set({ snapshot: next });
+    await paint(next);
+  });
+});
