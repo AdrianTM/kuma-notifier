@@ -1,0 +1,41 @@
+# Dependencies and generated extension packages
+node_modules/
+dist/
+artifacts/
+web-ext-artifacts/
+
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example
+.npmrc
+.aws/
+.ssh/
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials*.json
+secrets*.json
+
+# Browser profiles, local tooling, and caches
+browser-profile/
+firefox-profile/
+.web-ext/
+.codex/
+.agents/
+.cache/
+__pycache__/
+*.py[cod]
+coverage/
+.nyc_output/
+
+# Logs and editor/OS files
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
