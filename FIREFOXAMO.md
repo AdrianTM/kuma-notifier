@@ -63,6 +63,8 @@ web-ext sign --source-dir dist/firefox --channel listed \
 
 The metadata initially disables the listing while the privacy policy, icon, and screenshots are attached through AMO's API. Enable it only after those fields are present. `--approval-timeout 0` skips waiting for Mozilla's review; it does not bypass review or imply approval. Do not repeat an upload after a timeout without checking whether AMO already accepted the version.
 
+AMO tracks the listing and version's `is_disabled` flags separately. Check both when completing a submission; enabling the listing alone can leave its version disabled. Verify the resulting review/publication status before announcing availability. Screenshot captions require a separate JSON update after the multipart image upload. Respect the API's `Retry-After` response and avoid repeating successful edits, since both media and metadata changes count toward the account's submission limits.
+
 Alternatively, sign in at https://addons.mozilla.org/developers/, select **Submit a New Add-on → On this site**, and upload the Firefox ZIP plus source ZIP. Use the listing fields and reviewer notes above. Keep credentials outside the repository; never include them in command arguments, logs, or archives.
 
 ## Official references
