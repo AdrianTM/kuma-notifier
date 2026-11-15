@@ -63,3 +63,45 @@ test('new sources establish alert baselines, and notification failures do not fa
   assert.equal((await app.send({ type: 'save', config })).ok, true);
   assert.equal(app.data.snapshot.monitors[0].status, 'down');
 });
+
+test('successful host switches release the old permission only after the new connection is saved', async () => {
+  const app = await background({ config });
+  const next = { ...config, url: 'https://new-kuma.example' };
+  const remove = app.api.permissions.remove;
+  app.api.permissions.remove = async value => {
+    assert.equal(app.data.config.url, next.url);
+    return remove(value);
+  };
+  assert.equal((await app.send({ type: 'save', config: next })).ok, true);
+  assert.deepEqual(app.removed[0].origins, ['https://kuma.example/*']);
+  app.api.permissions.remove = remove;
+  assert.equal((await app.send({ type: 'disconnect' })).ok, true);
+  assert.deepEqual(app.removed[1].origins, ['https://new-kuma.example/*']);
+  assert.deepEqual(app.data, {});
+});
+test('failed switches retain working host access; same host patterns and first connections are not revoked', async () => {
+  const failed = await background({ config });
+  failed.setCollect(async () => { throw new Error('Login failed'); });
+  assert.equal((await failed.send({ type: 'save', config: { ...config, url: 'https://new-kuma.example' } })).ok, false);
+  assert.equal(failed.removed.length, 0);
+  assert.equal(failed.data.config.url, config.url);
+  for (const url of [config.url, 'https://kuma.example:8443/base']) {
+    const sameHost = await background({ config });
+    assert.equal((await sameHost.send({ type: 'save', config: { ...config, url, slug: 'different' } })).ok, true);
+    assert.equal(sameHost.removed.length, 0);
+  }
+  const first = await background();
+  assert.equal((await first.send({ type: 'save', config })).ok, true);
+  assert.equal(first.removed.length, 0);
+});
+
+test('permission cleanup failures do not report a successful host switch as a failed login', async () => {
+  const app = await background({ config });
+  app.api.permissions.remove = async () => { throw new Error('Permission cleanup unavailable'); };
+  app.setCollect(async () => ({ monitors: [{ id: 'new', status: 'up' }] }));
+  const next = { ...config, url: 'https://new-kuma.example' };
+  const response = await app.send({ type: 'save', config: next });
+  assert.equal(response.ok, true);
+  assert.equal(app.data.config.url, next.url);
+  assert.equal(app.data.snapshot.monitors[0].id, 'new');
+});

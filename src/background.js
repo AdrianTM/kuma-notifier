@@ -67,6 +67,12 @@ async function handle(message) {
     await schedule(config);
     await paint(snapshot);
     await notify(changes).catch(() => {});
+    if (previous.config?.url) {
+      const oldOrigin = hostPermission(previous.config.url);
+      // The new connection is already saved. Permission cleanup must not make
+      // Options report a failed login or keep its password fields populated.
+      if (oldOrigin !== origin) await api.permissions.remove({ origins: [oldOrigin] }).catch(() => {});
+    }
     return snapshot;
   }
   if (message.type === 'clear-badge' || message.type === 'restore-badge') {

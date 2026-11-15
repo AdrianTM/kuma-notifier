@@ -24,7 +24,7 @@ export async function background(initial = {}, { alarm, consent = true, firefox 
       async remove(keys) { for (const key of typeof keys === 'string' ? [keys] : keys) delete data[key]; },
     } },
     alarms: { onAlarm: event(), async get() { return alarm; }, async create(name, options) { created.push({ name, ...options }); alarm = { name, ...options }; }, async clear() { alarm = undefined; } },
-    permissions: { onAdded: event(), onRemoved: event(), async contains() { return true; }, async getAll() { return { data_collection: consent ? ['authenticationInfo'] : [] }; }, async remove(value) { removed.push(value); return true; } },
+    permissions: { onAdded: event(), onRemoved: event(), async contains() { return true; }, async getAll() { return { data_collection: consent ? ['authenticationInfo'] : [] }; }, async remove(value) { removed.push(structuredClone(value)); return true; } },
     notifications: { onClicked: event(), async create(id, options) { notifications.push({ id, ...options }); } },
     action: { async setBadgeText() {}, async setBadgeBackgroundColor() {}, async setTitle() {} },
     tabs: { async create() {} },

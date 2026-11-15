@@ -81,7 +81,7 @@ The extension connects directly to the configured Kuma host. There are no analyt
 
 Passwords and two-factor codes are never saved. Login tokens, connection settings, and the latest monitor snapshot are stored locally in the browser profile. A token carries the Kuma account's privileges, and browser local storage is not an encrypted secret vault. Full private monitor configurations are not persisted.
 
-Host access and desktop notification permission are requested when connecting. Firefox also requests authentication-information consent for account connections; public pages do not require it. Revoking that consent stops account checks and removes the saved token. **Disconnect & clear local data** removes the saved connection, token, and snapshot, and releases the current host permission. It does not revoke the token on the Kuma server. See the full [privacy policy](PRIVACY.md).
+Host access and desktop notification permission are requested when connecting. A successful switch to a different host releases the previous host permission. Firefox also requests authentication-information consent for account connections; public pages do not require it. Revoking that consent stops account checks and removes the saved token. **Disconnect & clear local data** removes the saved connection, token, and snapshot, and releases the current host permission. It does not revoke the token on the Kuma server. See the full [privacy policy](PRIVACY.md).
 
 ## Compatibility
 

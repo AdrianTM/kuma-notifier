@@ -1,6 +1,6 @@
 # Kuma Notifier privacy policy
 
-Effective date: November 14, 2026
+Effective date: November 15, 2026
 
 Kuma Notifier is an independent, open-source browser extension maintained by AdrianTM. It displays monitor health from the Uptime Kuma server or published status page you choose. The extension publisher does not operate a data-collection backend and does not receive your Kuma credentials or monitor data.
 
@@ -24,7 +24,7 @@ If enabled, desktop notifications send monitor names and outage or recovery stat
 
 ## Your choices and deletion
 
-Host and desktop-notification permissions are requested when you connect. You can disable desktop alerts in Settings or snooze them from the popup. Firefox's extension permissions let you revoke authentication-information consent; doing so stops subsequent account connections and removes the saved token. You can still use a public status page.
+Host and desktop-notification permissions are requested when you connect. After a successful switch to a different host, the extension releases permission for the previous host. You can disable desktop alerts in Settings or snooze them from the popup. Firefox's extension permissions let you revoke authentication-information consent; doing so stops subsequent account connections and removes the saved token. You can still use a public status page.
 
 Disconnect & clear local data removes saved settings, the token, and the monitor snapshot, and releases permission for the current host. Removing the extension also removes its local storage. Deleting local data does not revoke a token on the Kuma server or delete that server's logs. Contact the server's operator about its retention policy.
 
