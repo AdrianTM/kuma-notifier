@@ -59,10 +59,14 @@ async function handle(message) {
     const same = previous.config && sourceKey(previous.config) === sourceKey(config);
     const credentials = message.credentials?.username && message.credentials?.password ? message.credentials : undefined;
     const result = await collect(config, same ? previous.token : undefined, credentials);
-    const snapshot = carryBadgeState(same ? previous.snapshot : null, { monitors: result.monitors, updatedAt: Date.now(), error: null });
+    const before = same ? previous.snapshot?.monitors : null;
+    const monitors = carryAlertState(before, result.monitors);
+    const changes = transitions(before, monitors, config);
+    const snapshot = carryBadgeState(same ? previous.snapshot : null, { monitors, updatedAt: Date.now(), error: null });
     await api.storage.local.set({ config, snapshot, token: config.mode === 'private' ? result.token || null : null });
     await schedule(config);
     await paint(snapshot);
+    await notify(changes).catch(() => {});
     return snapshot;
   }
   if (message.type === 'clear-badge' || message.type === 'restore-badge') {
