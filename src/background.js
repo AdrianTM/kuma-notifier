@@ -126,3 +126,16 @@ api.permissions.onRemoved.addListener(permissions => {
     await paint(next);
   });
 });
+// Event pages/workers can restart without onStartup or onInstalled, and alarms
+// may have been cleared while the extension was disabled. Do not move an
+// existing alarm's deadline on every worker wake.
+async function ensurePolling() {
+  const { config } = await api.storage.local.get('config');
+  if (!config?.url || await api.alarms.get('refresh')) return;
+  if (config.mode === 'private') {
+    try { await requireAuthenticationConsent(); }
+    catch { return; }
+  }
+  await schedule(config);
+}
+serialize(ensurePolling).catch(error => console.error('Could not restore monitoring alarm:', error.message));
