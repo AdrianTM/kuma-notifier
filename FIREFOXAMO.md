@@ -1,6 +1,6 @@
 # Mozilla Add-ons submission
 
-Version: **0.1.0**. Extension ID: **kuma-notifier@adriantm**. Keep this ID for future updates.
+Version: **0.1.1**. Extension ID: **kuma-notifier@adriantm**. Keep this ID for future updates.
 
 ## Release files
 
@@ -14,8 +14,8 @@ npm run source:firefox
 
 | File | Purpose |
 | --- | --- |
-| `artifacts/kuma_notifier-0.1.0.zip` | Installable Firefox extension upload |
-| `artifacts/kuma-notifier-0.1.0-source.zip` | Separate source archive for Mozilla reviewers |
+| `artifacts/kuma_notifier-0.1.1.zip` | Installable Firefox extension upload |
+| `artifacts/kuma-notifier-0.1.1-source.zip` | Separate source archive for Mozilla reviewers |
 | `public/icons/icon-128.png` | Listing icon |
 | `artifacts/mozilla/01-monitor-list.png` | Main monitor list screenshot (synthetic data) |
 | `artifacts/mozilla/02-problems-filter.png` | Problems filter screenshot (synthetic data) |
@@ -38,7 +38,7 @@ To recreate the screenshots, start geckodriver with `MOZ_REMOTE_ALLOW_SYSTEM_ACC
 - **Support:** https://github.com/AdrianTM/kuma-notifier/issues
 - **Privacy policy:** [PRIVACY.md](PRIVACY.md), also uploaded as AMO privacy-policy text.
 - **Reviewer notes:** [docs/mozilla/reviewer-notes.txt](docs/mozilla/reviewer-notes.txt)
-- **Release notes:** Initial release with Kuma account and public status-page connections, toolbar down counts, searchable monitor lists, optional outage/recovery alerts, snoozing, and stale-connection indicators.
+- **Release notes:** Adds Clear badge / Show badge controls to hide the current down count until it changes. The choice persists across browser restarts. Monitoring, desktop alerts, and connection-error badges continue as before.
 
 No paid service is required. Users need access to a Kuma instance or published status page. This is an independent project, not an official Kuma extension.
 
@@ -57,11 +57,11 @@ The official `web-ext sign` command supports new AMO listings as well as updates
 ```sh
 web-ext sign --source-dir dist/firefox --channel listed \
   --amo-metadata docs/mozilla/metadata.json \
-  --upload-source-code artifacts/kuma-notifier-0.1.0-source.zip \
+  --upload-source-code artifacts/kuma-notifier-0.1.1-source.zip \
   --artifacts-dir artifacts/mozilla --approval-timeout 0
 ```
 
-The metadata initially disables the listing while the privacy policy, icon, and screenshots are attached through AMO's API. Enable it only after those fields are present. `--approval-timeout 0` skips waiting for Mozilla's review; it does not bypass review or imply approval. Do not repeat an upload after a timeout without checking whether AMO already accepted the version.
+The metadata keeps the existing listing enabled. Version 0.1.1 supersedes pending 0.1.0 on the same listing, retaining its privacy policy, icon, and gallery. Use a higher version for subsequent package uploads; do not create a second listing or disable the existing listing during an update. `--approval-timeout 0` skips waiting for Mozilla's review; it does not bypass review or imply approval. Do not repeat an upload after a timeout without checking whether AMO already accepted the version.
 
 AMO tracks the listing and version's `is_disabled` flags separately. Check both when completing a submission; enabling the listing alone can leave its version disabled. Verify the resulting review/publication status before announcing availability. Screenshot captions require a separate JSON update after the multipart image upload. Respect the API's `Retry-After` response and avoid repeating successful edits, since both media and metadata changes count toward the account's submission limits.
 

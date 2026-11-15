@@ -10,6 +10,7 @@ A Firefox-first browser extension that puts Uptime Kuma monitor health in your t
 - Open a monitor in Kuma directly from the popup.
 - Receive optional desktop alerts for outages and recoveries.
 - Snooze alerts for one hour or resume them from the popup header, next to Settings.
+- Clear the down-count badge until the number changes, with an option to show it again.
 - Refresh manually or check automatically every 1, 2, 5, or 10 minutes.
 - View clearly marked cached results when the connection is unavailable.
 - Follow the system's light or dark appearance.
@@ -67,6 +68,8 @@ Your browser must be able to reach the instance. Remote servers require HTTPS; H
 - **`!`** means some monitors are pending or unknown and none are known to be down.
 - **`?`** means the connection is unavailable; cached results may be stale.
 - No badge means no known down monitors, or that no instance has been configured. Hover over the icon for details.
+
+Use **Clear badge** below the popup summary to hide the current down count until it changes. For example, clearing `3` keeps the badge hidden while three monitors are down; a change to `4` or `2` shows the new count. A change to zero resets this choice, so the next outage shows normally. **Show badge** restores it immediately. The choice survives browser restarts; the popup still lists all monitors and desktop alerts continue. Connection errors still show `?`. The comparison uses the count, so replacing one down monitor with another at the same count keeps the badge hidden.
 
 Desktop alerts start after the initial connection establishes a baseline. Multiple changes in one check are combined into a single notification. Snoozing suppresses alerts while monitoring and the badge continue to update.
 

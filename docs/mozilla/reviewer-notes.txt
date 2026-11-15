@@ -1,11 +1,14 @@
 Kuma Notifier is an independent, read-only Uptime Kuma companion for desktop Firefox 140+ (Linux, macOS, Windows). Android is not selected.
 
+UPDATE 0.1.1
+Supersedes pending 0.1.0. Adds Clear badge / Show badge below the popup summary. Clearing persists until the down count changes; polling, alerts and connection-error badges continue. No new permissions or network behavior.
+
 BUILD
 Extract the source ZIP, follow BUILD-FIREFOX.md, and run npm ci then npm run build using Node.js 22. Output: dist/firefox/. esbuild bundles unminified JS; package-lock.json pins released npm dependencies. LICENSE and THIRD_PARTY_NOTICES.txt are included. No remote code or obfuscation.
 
 VALIDATOR WARNING
 DANGEROUS_EVAL is in unmodified engine.io-client 6.6.8 globals.js: Function("return this")() is a fallback used only when both self and window are absent. Supported Firefox background pages and Chrome workers provide self, so it is never executed here. CSP permits only script-src 'self', without unsafe-eval. Dependencies are left unchanged; the source build reproduces the package exactly.
-Official packages: https://www.npmjs.com/package/socket.io-client/v/4.8.1 and https://www.npmjs.com/package/engine.io-client/v/6.6.8 . Transitive versions/licenses are in THIRD_PARTY_NOTICES.txt.
+Dependency versions/licenses are in THIRD_PARTY_NOTICES.txt.
 
 DATA/PERMISSIONS
 Mandatory: storage and alarms. Host access and notifications are optional. Remote URLs require HTTPS; HTTP is limited to loopback. Data consent: required ["none"], optional ["authenticationInfo"]. Account mode requests consent before sending credentials, checks it each refresh, and removes the token/stops polling on revocation. Public-page mode needs no authentication consent. Data goes only to the selected Kuma host. No publisher backend, analytics, ads, cloud sync, content scripts, or unrelated browsing access. See PRIVACY.md.
@@ -13,8 +16,8 @@ Mandatory: storage and alarms. Host access and notifications are optional. Remot
 TESTING
 After npm ci, run npm run reviewer:server. This loopback-only protocol fixture uses synthetic data, not a live production account.
 1. Select Published status page in Settings; paste http://127.0.0.1:3001/status/main and connect. Approve host access/optional notifications. Two monitors appear.
-2. Open http://127.0.0.1:3001 in a tab. Click Simulate outage then Refresh in the extension: badge 1. Simulate recovery then Refresh clears it. Notifications depend on OS settings. Test search, Problems filter, Snooze/Resume alerts.
+2. Open http://127.0.0.1:3001 in a tab. Click Simulate outage then Refresh in the extension: badge 1. Click Clear badge: Refresh keeps it hidden; Show badge restores it. Clear again, then simulate recovery and Refresh. A subsequent outage and Refresh must show 1 again. Notifications depend on OS settings. Test search, Problems filter, Snooze/Resume alerts.
 3. Stop the fixture and Refresh: badge ? with cached results. Restart to recover.
 4. Select Kuma login, URL http://127.0.0.1:3001, username demo, password fixture-password. These are public fixture credentials. Approve authentication consent; Refresh tests saved-token login.
 5. Revoke authentication consent in about:addons: account checks stop and the token is removed. Disconnect clears local settings/data.
-A real local Kuma 2.5.11 instance with a throwaway account can also be used. README.md documents automated tests. Native OS notification delivery and signed-install restart behavior were not verified by the headless suite.
+README.md documents the 17 tests and Firefox smoke checks. Native OS notification delivery and signed-install restart behavior were not verified by the headless suite.

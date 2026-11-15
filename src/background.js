@@ -1,5 +1,5 @@
 import { api, requireAuthenticationConsent } from './browser.js';
-import { validateConfig, sourceKey, hostPermission, transitions, carryAlertState, badge, monitorUrl } from './core.js';
+import { validateConfig, sourceKey, hostPermission, transitions, carryAlertState, carryBadgeState, downCount, badge, monitorUrl } from './core.js';
 import { privateSnapshot, publicSnapshot } from './kuma.js';
 
 let queue = Promise.resolve();
@@ -35,7 +35,7 @@ async function refresh() {
   if (!config?.url) return;
   try {
     const result = await collect(config, token);
-    const next = { monitors: carryAlertState(snapshot?.monitors, result.monitors), updatedAt: Date.now(), error: null };
+    const next = carryBadgeState(snapshot, { monitors: carryAlertState(snapshot?.monitors, result.monitors), updatedAt: Date.now(), error: null });
     const changes = transitions(snapshot?.monitors, next.monitors, config);
     await api.storage.local.set({ snapshot: next });
     await paint(next);
@@ -43,7 +43,7 @@ async function refresh() {
     await notify(changes).catch(() => {});
     return next;
   } catch (error) {
-    const next = { monitors: snapshot?.monitors || [], updatedAt: snapshot?.updatedAt || null, error: error.message };
+    const next = carryBadgeState(snapshot, { monitors: snapshot?.monitors || [], updatedAt: snapshot?.updatedAt || null, error: error.message });
     await api.storage.local.set({ snapshot: next });
     await paint(next);
     return next;
@@ -55,15 +55,27 @@ async function handle(message) {
     const config = validateConfig(message.config);
     const origin = hostPermission(config.url);
     if (!await api.permissions.contains({ origins: [origin] })) throw new Error('Grant access to this Kuma host before connecting.');
-    const previous = await api.storage.local.get(['config', 'token']);
+    const previous = await api.storage.local.get(['config', 'token', 'snapshot']);
     const same = previous.config && sourceKey(previous.config) === sourceKey(config);
     const credentials = message.credentials?.username && message.credentials?.password ? message.credentials : undefined;
     const result = await collect(config, same ? previous.token : undefined, credentials);
-    const snapshot = { monitors: result.monitors, updatedAt: Date.now(), error: null };
+    const snapshot = carryBadgeState(same ? previous.snapshot : null, { monitors: result.monitors, updatedAt: Date.now(), error: null });
     await api.storage.local.set({ config, snapshot, token: config.mode === 'private' ? result.token || null : null });
     await schedule(config);
     await paint(snapshot);
     return snapshot;
+  }
+  if (message.type === 'clear-badge' || message.type === 'restore-badge') {
+    const { config, snapshot } = await api.storage.local.get(['config', 'snapshot']);
+    if (!config || !snapshot) return;
+    const next = { ...snapshot };
+    if (message.type === 'clear-badge') {
+      if (snapshot.error || !downCount(snapshot)) throw new Error('There is no current down-count badge to clear.');
+      if (message.count !== downCount(snapshot) || message.source !== sourceKey(config)) throw new Error('The connection or down count changed. Review the latest results and try again.');
+      next.clearedDownCount = downCount(snapshot);
+    } else delete next.clearedDownCount;
+    await api.storage.local.set({ snapshot: next });
+    await paint(next);
   }
   if (message.type === 'snooze') {
     const { config } = await api.storage.local.get('config');

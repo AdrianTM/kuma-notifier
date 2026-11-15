@@ -6,7 +6,7 @@ Only the temporary automation profile has permission prompts auto-accepted.
 import urllib.request,json,zipfile,time,base64,threading,subprocess,os,tempfile
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
-state={'status':1,'offline':False,'discover':True}
+state={'status':1,'second_status':1,'offline':False,'discover':True}
 class Handler(BaseHTTPRequestHandler):
  def log_message(self,*args): print('HTTP',args,flush=True)
  def do_GET(self):
@@ -16,7 +16,7 @@ class Handler(BaseHTTPRequestHandler):
    self.send_response(200);self.send_header('Content-Type','text/html');self.end_headers()
    self.wfile.write(b'<html><head><link rel="manifest" href="/api/status-page/main/manifest.json"></head></html>' if state['discover'] else b'<html></html>');return
   if '/heartbeat/' in self.path:
-   result={'heartbeatList':{'1':[{'status':state['status'],'time':'2026-11-14 17:00:00','ping':24,'msg':'Connection refused' if state['status']==0 else 'OK'}],'2':[{'status':1,'ping':8}]},'uptimeList':{'1_24':.998,'2_24':1}}
+   result={'heartbeatList':{'1':[{'status':state['status'],'time':'2026-11-14 17:00:00','ping':24,'msg':'Connection refused' if state['status']==0 else 'OK'}],'2':[{'status':state['second_status'],'ping':8}]},'uptimeList':{'1_24':.998,'2_24':1}}
   else: result={'publicGroupList':[{'name':'Production','monitorList':[{'id':1,'name':'API server'},{'id':2,'name':'Website'}]}]}
   self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(result).encode())
 server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
@@ -103,6 +103,48 @@ try:
  assert result['ok'] and result['value']['monitors'][0]['status']=='down',result
  assert asyncjs("const done=arguments[arguments.length-1];browser.action.getBadgeText({}).then(done);")=='1'
  print('Outage: badge 1 and down monitor received')
+ # Clear through the real popup button, then verify refresh and popup reload persistence.
+ def badge_text():return asyncjs("const done=arguments[arguments.length-1];browser.action.getBadgeText({}).then(done);")
+ def refresh():return asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'refresh'}).then(done);")
+ def click_badge_button(expected):
+  button=request('POST',prefix+'/element',{'using':'css selector','value':'#clear-badge'})['element-6066-11e4-a52e-4f735466cecf']
+  request('POST',prefix+'/element/'+button+'/click',{})
+  for _ in range(100):
+   if badge_text()==expected:break
+   time.sleep(.1)
+  assert badge_text()==expected
+ click_badge_button('')
+ refresh()
+ goto(extension+'popup.html')
+ assert badge_text()==''
+ assert js("return document.getElementById('clear-badge').textContent;")=='Show badge'
+ assert js("return document.querySelector('.stat.down b').textContent;")=='1'
+ click_badge_button('1')
+ goto(extension+'popup.html')
+ click_badge_button('')
+ # A new outage brings the count back; returning to the old count must not hide it.
+ state['second_status']=0
+ refresh()
+ assert badge_text()=='2'
+ result=asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'clear-badge',count:1,source:arguments[0]}).then(done);",[json.dumps(['public',root_url,'main'],separators=(',',':'))])
+ assert result['ok'] is False
+ assert badge_text()=='2'
+ state['second_status']=1
+ refresh()
+ assert badge_text()=='1'
+ goto(extension+'popup.html')
+ click_badge_button('')
+ # Re-saving the same connection preserves the acknowledgement.
+ saved=asyncjs("const done=arguments[arguments.length-1];browser.storage.local.get('config').then(done);")
+ result=asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'save',config:arguments[0]}).then(done);",[saved['config']])
+ assert result['ok'] and badge_text()==''
+ # Switching to a different status page resets it, even at the same count.
+ other_config={**saved['config'],'slug':'other'}
+ result=asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'save',config:arguments[0]}).then(done);",[other_config])
+ assert result['ok'] and badge_text()=='1'
+ goto(extension+'popup.html')
+ click_badge_button('')
+ print('PASS: clear/show badge, unchanged refresh, popup reopen, count changes, stale clicks, and connection reset')
  time.sleep(.2)
  Path(tempfile.gettempdir(),'kuma-popup.png').write_bytes(base64.b64decode(request('GET',prefix+'/screenshot')))
  js("document.getElementById('search').value='Website';document.getElementById('search').dispatchEvent(new Event('input'));")
@@ -112,7 +154,10 @@ try:
  assert result['value']['error'] and len(result['value']['monitors'])==2
  assert asyncjs("const done=arguments[arguments.length-1];browser.action.getBadgeText({}).then(done);")=='?'
  print('Offline: badge ? and cached data preserved')
- state['offline']=False;state['status']=1
+ state['offline']=False
+ refresh()
+ assert badge_text()==''
+ state['status']=1
  result=asyncjs("const done=arguments[arguments.length-1];browser.runtime.sendMessage({type:'refresh'}).then(done);")
  assert result['value']['error'] is None
  assert asyncjs("const done=arguments[arguments.length-1];browser.action.getBadgeText({}).then(done);")==''

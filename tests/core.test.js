@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULTS, baseUrl, validateConfig, requireSecureConnection, hostPermission, publicConnection, connectionFromManifest, normalize, transitions, carryAlertState, badge, monitorUrl, sourceKey } from '../src/core.js';
+import { DEFAULTS, baseUrl, validateConfig, requireSecureConnection, hostPermission, publicConnection, connectionFromManifest, normalize, transitions, carryAlertState, carryBadgeState, downCount, badgeCleared, badge, monitorUrl, sourceKey } from '../src/core.js';
 test('remote connections require encryption while loopback fixtures remain available', () => {
   for (const url of ['https://kuma.example.com', 'http://localhost:3001', 'http://127.0.0.1:3001', 'http://[::1]:3001']) assert.doesNotThrow(() => requireSecureConnection(url));
   for (const url of ['http://kuma.example.com', 'http://100.80.2.1:3001', 'http://localhost.example.com', 'ftp://localhost']) {
@@ -68,4 +68,39 @@ test('links preserve base path and public pages cannot link into private monitor
   assert.equal(monitorUrl(config, '1'), 'https://kuma.example/base/status/main');
   assert.equal(monitorUrl({ ...config, mode: 'private' }, '1'), 'https://kuma.example/base/dashboard/1');
   assert.notEqual(sourceKey(config), sourceKey({ ...config, slug: 'second' }));
+});
+
+test('cleared badge persists for the same down count, including different monitors', () => {
+  const previous = { monitors: [{ id: 'a', status: 'down' }], clearedDownCount: 1 };
+  const next = carryBadgeState(previous, { monitors: [{ id: 'b', status: 'down' }, { status: 'paused' }] });
+  assert.equal(downCount(next), 1);
+  assert.ok(badgeCleared(next));
+  assert.equal(badge(next).text, '');
+  assert.match(badge(next).title, /1 down.*badge hidden/);
+  // The acknowledgement survives storage serialization and does not snooze alerts.
+  assert.equal(badge(JSON.parse(JSON.stringify(next))).text, '');
+  assert.equal(transitions([{ id: 'b', status: 'up' }], next.monitors, DEFAULTS).length, 1);
+});
+test('any observed count change ends badge clearing permanently, including recovery to zero', () => {
+  const snapshot = count => ({ monitors: Array.from({ length: count }, () => ({ status: 'down' })) });
+  const previous = { ...snapshot(3), clearedDownCount: 3 };
+  for (const count of [4, 2, 0]) {
+    const changed = carryBadgeState(previous, snapshot(count));
+    assert.equal(changed.clearedDownCount, undefined);
+    assert.equal(badge(changed).text, count ? String(count) : '');
+    assert.equal(badge(carryBadgeState(changed, snapshot(3))).text, '3');
+  }
+  // Counts above the display cap still invalidate the acknowledgement.
+  assert.equal(badge(carryBadgeState({ ...snapshot(100), clearedDownCount: 100 }, snapshot(101))).text, '99+');
+  assert.equal(badge(carryBadgeState(null, snapshot(3))).text, '3');
+});
+test('clearing never hides connection failures or uncertain-state warnings', () => {
+  const previous = { monitors: [{ status: 'down' }], clearedDownCount: 1 };
+  const offline = carryBadgeState(previous, { monitors: previous.monitors, error: 'Offline' });
+  assert.equal(badge(offline).text, '?');
+  assert.equal(badgeCleared(offline), false);
+  assert.equal(badge(carryBadgeState(offline, { monitors: previous.monitors })).text, '');
+  const pending = carryBadgeState(offline, { monitors: [{ status: 'pending' }] });
+  assert.equal(badge(pending).text, '!');
+  assert.equal(pending.clearedDownCount, undefined);
 });

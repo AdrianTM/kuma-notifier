@@ -4,6 +4,7 @@ Kuma Notifier puts the number of down monitors on your Firefox toolbar. Click th
 
 • Connect with your Kuma account, or paste a published status-page URL.
 • Receive optional desktop alerts for outages and recoveries.
+• Clear the down-count badge until the count changes, or show it again manually.
 • Snooze alerts for one hour or resume them beside Settings.
 • Refresh manually or check every 1, 2, 5, or 10 minutes.
 • Open a monitor directly in Kuma.

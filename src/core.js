@@ -87,14 +87,29 @@ export function carryAlertState(previous, current) {
   return current.map(m => ({ ...m, alertStatus: ['pending', 'unknown'].includes(m.status)
     ? old.get(m.id)?.alertStatus || old.get(m.id)?.status || m.status : m.status }));
 }
+export function downCount(snapshot) { return (snapshot?.monitors || []).filter(m => m.status === 'down').length; }
+export function badgeCleared(snapshot) {
+  return !snapshot?.error && snapshot?.clearedDownCount > 0 && snapshot.clearedDownCount === downCount(snapshot);
+}
+export function carryBadgeState(previous, current) {
+  const next = { ...current };
+  delete next.clearedDownCount;
+  // Failed checks do not establish a new count; keep the acknowledgement but
+  // always let the connection-error badge show until checks succeed again.
+  if (previous?.clearedDownCount > 0 && (next.error || previous.clearedDownCount === downCount(next))) {
+    next.clearedDownCount = previous.clearedDownCount;
+  }
+  return next;
+}
 export function badge(snapshot) {
   if (!snapshot) return { text: '', color: '#64748b', title: 'Kuma Notifier — connect an instance' };
   if (snapshot.error) return { text: '?', color: '#b45309', title: 'Kuma Notifier — connection unavailable; cached results may be stale' };
-  const down = snapshot.monitors.filter(m => m.status === 'down').length;
+  const down = downCount(snapshot);
+  const cleared = badgeCleared(snapshot);
   const uncertain = snapshot.monitors.some(m => ['unknown', 'pending'].includes(m.status));
-  return { text: down ? (down > 99 ? '99+' : String(down)) : uncertain ? '!' : '',
+  return { text: down ? (cleared ? '' : down > 99 ? '99+' : String(down)) : uncertain ? '!' : '',
     color: down ? '#dc2626' : uncertain ? '#b45309' : '#16a34a',
-    title: `Kuma Notifier — ${down} down · ${snapshot.monitors.length} monitors` };
+    title: `Kuma Notifier — ${down} down · ${snapshot.monitors.length} monitors${cleared ? ' · badge hidden until count changes' : ''}` };
 }
 export function monitorUrl(config, id) {
   return config.mode === 'public' ? config.publicUrl || `${config.url}/status/${encodeURIComponent(config.slug)}` : `${config.url}/dashboard${id ? `/${encodeURIComponent(id)}` : ''}`;

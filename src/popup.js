@@ -1,5 +1,5 @@
 import { api } from './browser.js';
-import { monitorUrl } from './core.js';
+import { monitorUrl, downCount, badgeCleared, sourceKey } from './core.js';
 const $ = id => document.getElementById(id);
 let config, snapshot;
 const priority = { down: 0, pending: 1, unknown: 2, maintenance: 3, up: 4, paused: 5 };
@@ -11,6 +11,10 @@ function render() {
   if (!config) return;
   $('instance').textContent = new URL(config.url).host;
   const monitors = snapshot?.monitors || [];
+  const cleared = badgeCleared(snapshot);
+  $('badge-controls').hidden = Boolean(snapshot?.error) || !downCount(snapshot);
+  $('clear-badge').textContent = cleared ? 'Show badge' : 'Clear badge';
+  $('badge-hint').textContent = cleared ? 'Hidden until down count changes' : 'Until down count changes';
   $('summary').replaceChildren(...['down', 'up', 'other'].map(status => {
     const count = monitors.filter(m => status === 'other' ? !['up', 'down'].includes(m.status) : m.status === status).length;
     const tile = element('div', `stat ${status}`); tile.append(element('b', '', count), document.createTextNode(status === 'other' ? 'Other states' : status === 'up' ? 'Up' : 'Down')); return tile;
@@ -44,6 +48,11 @@ for (const id of ['settings', 'connect']) $(id).addEventListener('click', () => 
 $('search').addEventListener('input', render); $('filter').addEventListener('change', render);
 $('dashboard').addEventListener('click', () => api.tabs.create({ url: monitorUrl(config) }));
 $('snooze').addEventListener('click', () => send({ type: 'snooze', enabled: !(config.snoozeUntil > Date.now()) }));
+$('clear-badge').addEventListener('click', async () => {
+  $('clear-badge').disabled = true;
+  await send({ type: badgeCleared(snapshot) ? 'restore-badge' : 'clear-badge', count: downCount(snapshot), source: sourceKey(config) });
+  $('clear-badge').disabled = false;
+});
 $('refresh').addEventListener('click', async () => { $('refresh').disabled = true; $('refresh').textContent = 'Refreshing…'; await send({ type: 'refresh' }); $('refresh').disabled = false; $('refresh').textContent = 'Refresh'; });
 api.storage.onChanged.addListener((_, area) => { if (area === 'local') load(); });
 load();
