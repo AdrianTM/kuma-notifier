@@ -13,7 +13,7 @@ async function fixture(t, onConnection) {
   return { url: `http://127.0.0.1:${http.address().port}/kuma` };
 }
 function sendSnapshot(socket) {
-  socket.emit('monitorList', { 1: { id: 1, name: 'Private API', active: true }, 2: { id: 2, name: 'Paused', active: false } });
+  socket.emit('monitorList', { 1: { id: 1, name: 'Private API', active: true, parent: 90, path: ['Infrastructure', 'Production', 'Private API'], pathName: 'Infrastructure / Production / Private API' }, 2: { id: 2, name: 'Paused', active: false } });
   socket.emit('heartbeatList', 1, [{ status: 0, time: '2026-11-14 12:00:00', ping: 15 }]);
   socket.emit('uptime', 1, 24, .995);
 }
@@ -30,6 +30,7 @@ test('login waits for the token even when monitor data arrives before the authen
   const result = await privateSnapshot(config, { username: 'adrian', password: 'test-password' });
   assert.equal(result.token, 'local-token');
   assert.equal(result.monitors[0].status, 'down');
+  assert.equal(result.monitors[0].group, 'Infrastructure / Production');
   assert.equal(result.monitors[0].uptime, .995);
   assert.equal(result.monitors[1].status, 'paused');
 });

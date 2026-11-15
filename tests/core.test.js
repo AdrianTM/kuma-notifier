@@ -123,3 +123,22 @@ test('observed unknown or maintenance monitors alert when they become down, but 
   assert.equal(transitions(unknown, [{ id: '1', status: 'up' }], DEFAULTS).length, 1);
   assert.equal(transitions([{ id: '1', status: 'maintenance' }], [{ id: '1', status: 'up' }], DEFAULTS).length, 0);
 });
+
+test('authenticated groups use ancestor paths without duplicating the monitor name', () => {
+  const monitors = [
+    { id: 1, name: 'API', path: ['Production', 'Europe', 'API'], pathName: 'Production / Europe / API' },
+    { id: 2, name: 'API / v2', pathName: 'Production / Europe / API / v2' },
+    { id: 3, name: 'Standalone', path: ['Standalone'], pathName: 'Standalone' },
+    { id: 4, name: 'Standalone', pathName: 'Standalone' },
+    { id: 5, name: 'API', group: 'Published services', path: ['Internal', 'API'] },
+    { id: 6, name: 'API', group: '', pathName: 'Internal / API' },
+    { id: 7, name: 'API', path: ['Operations / EU', 'API'] },
+    { id: 8, name: 'Legacy', parent: null },
+    { id: 9, name: 'Production', type: 'group', path: ['Production'] },
+  ];
+  const result = normalize(monitors, {});
+  assert.deepEqual(result.map(m => m.group), ['Production / Europe', 'Production / Europe', '', '', 'Published services', '', 'Operations / EU', '']);
+  assert.equal(result.length, 8);
+  assert.equal(Object.hasOwn(result[0], 'path'), false);
+  assert.equal(Object.hasOwn(result[0], 'pathName'), false);
+});

@@ -8,7 +8,7 @@ const http = createServer((request, response) => {
 });
 const io = new Server(http);
 function snapshot(socket, callback) {
-  socket.emit('monitorList', { 1: { id: 1, name: 'Private service', active: true, secret: 'must-not-be-stored' } });
+  socket.emit('monitorList', { 1: { id: 1, name: 'Private service', active: true, parent: 90, path: ['Production', 'Private service'], pathName: 'Production / Private service', secret: 'must-not-be-stored' } });
   socket.emit('heartbeatList', 1, [{ status: 1, ping: 7, time: '2026-11-14 17:00:00' }]);
   callback({ ok: true, token: 'fixture-token' });
 }

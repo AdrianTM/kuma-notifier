@@ -181,6 +181,12 @@ try:
   assert result=='Connected. 1 monitors loaded.',result
   data=asyncjs("const done=arguments[arguments.length-1];browser.storage.local.get().then(done);")
   assert data['token']=='fixture-token'
+  assert data['snapshot']['monitors'][0]['group']=='Production'
+  goto(extension+'popup.html')
+  js("document.getElementById('search').value='Production';document.getElementById('search').dispatchEvent(new Event('input'));")
+  assert js("return document.querySelectorAll('.monitor').length;")==1
+  assert 'Production' in js("return document.querySelector('.monitor-detail').textContent;")
+  print('PASS: authenticated group hierarchy appears and is searchable')
   permissions=asyncjs("const done=arguments[arguments.length-1];browser.permissions.getAll().then(done);")
   assert 'authenticationInfo' in permissions['data_collection']
   assert 'fixture-password' not in json.dumps(data) and 'must-not-be-stored' not in json.dumps(data)

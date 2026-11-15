@@ -63,10 +63,19 @@ export function statusOf(monitor, beat) {
 export function newest(beats = []) {
   return beats.reduce((latest, beat) => !latest || String(beat.time) >= String(latest.time) ? beat : latest, null);
 }
+function groupOf(monitor) {
+  // Public pages provide their own group label. Authenticated monitor paths
+  // include the monitor itself as the last component; keep only its ancestors.
+  if (typeof monitor.group === 'string') return monitor.group;
+  if (Array.isArray(monitor.path) && monitor.path.every(part => typeof part === 'string')) return monitor.path.slice(0, -1).join(' / ');
+  const suffix = ` / ${monitor.name}`;
+  return typeof monitor.pathName === 'string' && monitor.pathName.endsWith(suffix)
+    ? monitor.pathName.slice(0, -suffix.length) : '';
+}
 export function normalize(monitors, heartbeats, uptime = {}) {
   return Object.values(monitors).filter(m => m.type !== 'group').map(m => {
     const beat = newest(heartbeats[m.id]);
-    return { id: String(m.id), name: String(m.name || `Monitor ${m.id}`), group: m.group || '',
+    return { id: String(m.id), name: String(m.name || `Monitor ${m.id}`), group: groupOf(m),
       status: statusOf(m, beat), ping: typeof beat?.ping === 'number' ? beat.ping : null,
       message: String(beat?.msg || ''), time: beat?.time || null,
       uptime: typeof uptime[`${m.id}_24`] === 'number' ? uptime[`${m.id}_24`] : null };
