@@ -105,3 +105,28 @@ test('permission cleanup failures do not report a successful host switch as a fa
   assert.equal(app.data.config.url, next.url);
   assert.equal(app.data.snapshot.monitors[0].id, 'new');
 });
+
+test('saving stale Options settings preserves active snooze and suppresses transitions during save', async () => {
+  const app = await background({ config, snapshot: { monitors: [{ id: '1', status: 'up' }] } });
+  await app.send({ type: 'snooze', enabled: true });
+  const until = app.data.config.snoozeUntil;
+  assert.ok(until > Date.now());
+  app.setCollect(async () => ({ monitors: [{ id: '1', status: 'down' }] }));
+  assert.equal((await app.send({ type: 'save', config: { ...config, snoozeUntil: 0, interval: 5 } })).ok, true);
+  assert.equal(app.data.config.snoozeUntil, until);
+  assert.equal(app.data.config.interval, 5);
+  assert.equal(app.notifications.length, 0);
+  assert.equal(app.data.snapshot.monitors[0].alertStatus, 'down');
+});
+test('saving stale Options settings cannot reinstate a resumed or disconnected snooze', async () => {
+  const stale = { ...config, snoozeUntil: Date.now() + 3600000 };
+  const app = await background({ config: stale, snapshot: { monitors: [{ id: '1', status: 'up' }] } });
+  await app.send({ type: 'snooze', enabled: false });
+  app.setCollect(async () => ({ monitors: [{ id: '1', status: 'down' }] }));
+  assert.equal((await app.send({ type: 'save', config: stale })).ok, true);
+  assert.equal(app.data.config.snoozeUntil, 0);
+  assert.equal(app.notifications.length, 1);
+  await app.send({ type: 'disconnect' });
+  assert.equal((await app.send({ type: 'save', config: stale })).ok, true);
+  assert.equal(app.data.config.snoozeUntil, 0);
+});

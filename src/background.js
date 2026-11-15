@@ -56,6 +56,8 @@ async function handle(message) {
     const origin = hostPermission(config.url);
     if (!await api.permissions.contains({ origins: [origin] })) throw new Error('Grant access to this Kuma host before connecting.');
     const previous = await api.storage.local.get(['config', 'token', 'snapshot']);
+    // Snooze belongs to the popup, not the potentially stale Options form.
+    config.snoozeUntil = previous.config?.snoozeUntil || 0;
     const same = previous.config && sourceKey(previous.config) === sourceKey(config);
     const credentials = message.credentials?.username && message.credentials?.password ? message.credentials : undefined;
     const result = await collect(config, same ? previous.token : undefined, credentials);
