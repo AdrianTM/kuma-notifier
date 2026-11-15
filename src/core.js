@@ -78,7 +78,7 @@ export function transitions(previous, current, config, now = Date.now()) {
   return current.filter(m => {
     const before = old.get(m.id)?.alertStatus || old.get(m.id)?.status;
     if (!before || before === m.status) return false;
-    if (m.status === 'down') return config.outages && ['up', 'pending'].includes(before);
+    if (m.status === 'down') return config.outages && ['up', 'pending', 'unknown', 'maintenance'].includes(before);
     return config.recoveries && m.status === 'up' && before === 'down';
   });
 }

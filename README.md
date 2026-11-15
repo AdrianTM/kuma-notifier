@@ -71,7 +71,7 @@ Your browser must be able to reach the instance. Remote servers require HTTPS; H
 
 Use **Clear badge** below the popup summary to hide the current down count until it changes. For example, clearing `3` keeps the badge hidden while three monitors are down; a change to `4` or `2` shows the new count. A change to zero resets this choice, so the next outage shows normally. **Show badge** restores it immediately. The choice survives browser restarts; the popup still lists all monitors and desktop alerts continue. Connection errors still show `?`. The comparison uses the count, so replacing one down monitor with another at the same count keeps the badge hidden.
 
-Desktop alerts start after the initial connection establishes a baseline. Multiple changes in one check are combined into a single notification. Snoozing suppresses alerts while monitoring and the badge continue to update.
+Desktop alerts start after the initial connection establishes a baseline. Previously observed monitors that move from unknown or maintenance to down trigger outage alerts; monitors first discovered as down do not. Multiple changes in one check are combined into a single notification. Snoozing suppresses alerts while monitoring and the badge continue to update.
 
 Checks require the browser to be running. Sleep, browser suspension, and network loss can delay updates. Outages that begin and end between checks may be missed, and Kuma's status-page cache can add further delay. Keep Kuma's own notifications enabled for critical alerts.
 

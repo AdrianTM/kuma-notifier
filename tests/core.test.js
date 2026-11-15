@@ -104,3 +104,22 @@ test('clearing never hides connection failures or uncertain-state warnings', () 
   assert.equal(badge(pending).text, '!');
   assert.equal(pending.clearedDownCount, undefined);
 });
+
+test('observed unknown or maintenance monitors alert when they become down, but new monitors do not', () => {
+  for (const status of ['unknown', 'maintenance']) {
+    const baseline = carryAlertState(null, [{ id: '1', status }]);
+    const down = carryAlertState(baseline, [{ id: '1', status: 'down' }]);
+    assert.equal(transitions(baseline, down, DEFAULTS).length, 1);
+    assert.equal(transitions(down, down, DEFAULTS).length, 0);
+    assert.equal(transitions(baseline, down, { ...DEFAULTS, outages: false }).length, 0);
+    assert.equal(transitions(baseline, down, { ...DEFAULTS, snoozeUntil: 200 }, 100).length, 0);
+  }
+  const firstDown = carryAlertState([], [{ id: 'new', status: 'down' }]);
+  assert.equal(transitions([], firstDown, DEFAULTS).length, 0);
+  assert.equal(transitions(null, firstDown, DEFAULTS).length, 0);
+  const down = [{ id: '1', status: 'down' }];
+  const unknown = carryAlertState(down, [{ id: '1', status: 'unknown' }]);
+  assert.equal(transitions(unknown, down, DEFAULTS).length, 0);
+  assert.equal(transitions(unknown, [{ id: '1', status: 'up' }], DEFAULTS).length, 1);
+  assert.equal(transitions([{ id: '1', status: 'maintenance' }], [{ id: '1', status: 'up' }], DEFAULTS).length, 0);
+});
